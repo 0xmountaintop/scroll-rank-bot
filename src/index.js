@@ -41,52 +41,62 @@ const getFormattedValues = async (coins) => {
     return results;
 };
 
-// Listen for the command
-bot.onText(/\/check_scroll_ranking/, async (msg) => {
-    const chatId = msg.chat.id;
-
-    // Check if cached data is available and if it's within the last hour
+async function updateData(){
     const currentTime = new Date();
-    if (cachedData && lastFetchTime && (currentTime - lastFetchTime) < 3600000) {
-        // Send the cached response back to the user
-        bot.sendMessage(chatId, cachedData);
-        return;
+
+    const coins = ['starknet', 'zksync', 'taiko', 'scroll'];
+    var coinData = null;
+    try {
+        coinData = await getFormattedValues(coins);
+    } catch (error) {
+        console.error('Error fetching data:', error);
     }
 
-    try {
-        const coins = ['starknet', 'zksync', 'taiko', 'scroll'];
-        const coinData = await getFormattedValues(coins);
+    // Send the response back to the user
+    const responseMessage = `
+Date: ${currentTime.toLocaleString()} (UTC)
 
-        // Send the response back to the user
-        const responseMessage = `
-        Starknet:
-- Price: ${coinData.starknet.price}
+Starknet:
+- Price: $${coinData.starknet.price}
 - Market Cap: ${coinData.starknet.marketCap}
 - Fully Diluted Valuation: ${coinData.starknet.fullyDilutedValuation}
 
 Zksync:
-- Price: ${coinData.zksync.price}
+- Price: $${coinData.zksync.price}
 - Market Cap: ${coinData.zksync.marketCap}
 - Fully Diluted Valuation: ${coinData.zksync.fullyDilutedValuation}
 
 Taiko:
-- Price: ${coinData.taiko.price}
+- Price: $${coinData.taiko.price}
 - Market Cap: ${coinData.taiko.marketCap}
 - Fully Diluted Valuation: ${coinData.taiko.fullyDilutedValuation}
 
 Scroll:
-- Price: ${coinData.scroll.price}
+- Price: $${coinData.scroll.price}
 - Market Cap: ${coinData.scroll.marketCap}
 - Fully Diluted Valuation: ${coinData.scroll.fullyDilutedValuation}
-        `;
+    `;
 
-        // Cache the result and update the last fetch time
-        cachedData = responseMessage;
-        lastFetchTime = currentTime;
+    // Cache the result and update the last fetch time
+    cachedData = responseMessage;
+    lastFetchTime = currentTime;
+}
 
-        bot.sendMessage(chatId, responseMessage);
-    } catch (error) {
-        console.error('Error fetching data:', error);
+
+updateData()
+
+// for every 5 minutes
+setInterval(updateData, 300000);
+
+// Listen for the command
+bot.onText(/\/check_scroll_ranking/, async (msg) => {
+    const chatId = msg.chat.id;
+
+    if (cachedData) {
+        // Send the cached response back to the user
+        bot.sendMessage(chatId, cachedData);
+        return;
+    } else {
         bot.sendMessage(chatId, 'Sorry, there was an error fetching the data.');
     }
 });
