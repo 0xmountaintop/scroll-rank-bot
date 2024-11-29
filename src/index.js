@@ -21,6 +21,7 @@ const formatValue = (value) => {
 const fetchCoinData = async (coin) => {
     const response = await axios.get(`https://api.coingecko.com/api/v3/coins/${coin}`);
     return {
+        price: response.data.market_data.current_price.usd,
         marketCap: response.data.market_data.market_cap.usd,
         fullyDilutedValuation: response.data.market_data.fully_diluted_valuation.usd,
     };
@@ -32,6 +33,7 @@ const getFormattedValues = async (coins) => {
     for (const coin of coins) {
         const data = await fetchCoinData(coin);
         results[coin] = {
+            price: data.price,
             marketCap: formatValue(data.marketCap),
             fullyDilutedValuation: formatValue(data.fullyDilutedValuation),
         };
@@ -58,18 +60,22 @@ bot.onText(/\/check_scroll_ranking/, async (msg) => {
         // Send the response back to the user
         const responseMessage = `
         Starknet:
+- Price: ${coinData.starknet.price}
 - Market Cap: ${coinData.starknet.marketCap}
 - Fully Diluted Valuation: ${coinData.starknet.fullyDilutedValuation}
 
 Zksync:
+- Price: ${coinData.zksync.price}
 - Market Cap: ${coinData.zksync.marketCap}
 - Fully Diluted Valuation: ${coinData.zksync.fullyDilutedValuation}
 
 Taiko:
+- Price: ${coinData.taiko.price}
 - Market Cap: ${coinData.taiko.marketCap}
 - Fully Diluted Valuation: ${coinData.taiko.fullyDilutedValuation}
 
 Scroll:
+- Price: ${coinData.scroll.price}
 - Market Cap: ${coinData.scroll.marketCap}
 - Fully Diluted Valuation: ${coinData.scroll.fullyDilutedValuation}
         `;
