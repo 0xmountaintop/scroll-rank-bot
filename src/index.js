@@ -39,7 +39,8 @@ const fetchCoinData = async (coinId) => {
         return {
             price: data.current_price.usd,
             marketCap: data.market_cap.usd,
-            fullyDilutedValuation: data.fully_diluted_valuation?.usd
+            fullyDilutedValuation: data.fully_diluted_valuation?.usd,
+            price_change_percentage_24h: data.price_change_percentage_24h
         };
     } catch (error) {
         console.error(`Error fetching data for ${coinId}:`, error.message);
@@ -52,6 +53,7 @@ const formatCoinMessage = (coinName, data) => {
     
     return `${coinName}:
 - Price: ${formatPrice(data.price)}
+- 24h Change: ${data.price_change_percentage_24h}%
 - Market Cap: ${formatValue(data.marketCap)}
 - FDV: ${formatValue(data.fullyDilutedValuation)}`;
 };
