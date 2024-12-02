@@ -34,13 +34,14 @@ const formatPrice = (price) => {
 const fetchCoinData = async (coinId) => {
     try {
         const response = await axios.get(`https://api.coingecko.com/api/v3/coins/${coinId}`);
-        const { market_data: data } = response.data;
+        const { market_data } = response.data;
         
         return {
-            price: data.current_price.usd,
-            marketCap: data.market_cap.usd,
-            fullyDilutedValuation: data.fully_diluted_valuation?.usd,
-            price_change_percentage_24h: data.price_change_percentage_24h
+            price: market_data.current_price.usd,
+            marketCap: market_data.market_cap.usd,
+            fullyDilutedValuation: market_data.fully_diluted_valuation?.usd,
+            price_change_percentage_24h: market_data.price_change_percentage_24h,
+            volume_24h: market_data.total_volume.usd
         };
     } catch (error) {
         console.error(`Error fetching data for ${coinId}:`, error.message);
@@ -54,6 +55,7 @@ const formatCoinMessage = (coinName, data) => {
     return `${coinName}:
 - Price: ${formatPrice(data.price)}
 - 24h Change: ${data.price_change_percentage_24h}%
+- 24h Volume (USD): ${formatValue(data.volume_24h)}
 - Market Cap: ${formatValue(data.marketCap)}
 - FDV: ${formatValue(data.fullyDilutedValuation)}`;
 };
