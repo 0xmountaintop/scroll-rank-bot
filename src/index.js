@@ -64,11 +64,12 @@ async function updateData() {
     const currentTime = new Date();
     const results = {};
 
-    // Fetch data for all coins with rate limiting
-    for (const coin of Object.values(COINS)) {
-        results[coin.id] = await fetchCoinData(coin.id);
-        // await new Promise(resolve => setTimeout(resolve, 1000)); // Rate limiting
-    }
+    // Fetch data for all coins in parallel
+    const fetchPromises = Object.values(COINS).map(coin => fetchCoinData(coin.id));
+    const resultsArray = await Promise.all(fetchPromises);
+    resultsArray.forEach((data, index) => {
+        results[Object.values(COINS)[index].id] = data;
+    });
 
     const messages = Object.values(COINS)
         .map(coin => formatCoinMessage(coin.name, results[coin.id]))
