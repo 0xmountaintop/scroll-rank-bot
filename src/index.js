@@ -49,7 +49,7 @@ const fetchCoinData = async (coinId) => {
     }
 };
 
-const formatCoinMessage = (coinName, data) => {
+const formatCoinMessage = (coinName, data, fdvRatio) => {
     if (!data) return `${coinName}:\nData unavailable`;
     
     return `${coinName}:
@@ -57,7 +57,8 @@ const formatCoinMessage = (coinName, data) => {
 - 24h Change: ${data.price_change_percentage_24h}%
 - 24h Volume (USD): ${formatValue(data.volume_24h)}
 - Market Cap: ${formatValue(data.marketCap)}
-- FDV: ${formatValue(data.fullyDilutedValuation)}`;
+- FDV: ${formatValue(data.fullyDilutedValuation)}
+- FDV Ratio: ${(fdvRatio * 100).toFixed(2)}%`;
 };
 
 async function updateData() {
@@ -71,8 +72,17 @@ async function updateData() {
         results[Object.values(COINS)[index].id] = data;
     });
 
+    // Calculate total FDV
+    const totalFDV = Object.values(results)
+        .reduce((sum, data) => sum + (data?.fullyDilutedValuation || 0), 0);
+
+    // Create messages with FDV ratios
     const messages = Object.values(COINS)
-        .map(coin => formatCoinMessage(coin.name, results[coin.id]))
+        .map(coin => {
+            const data = results[coin.id];
+            const fdvRatio = data?.fullyDilutedValuation ? data.fullyDilutedValuation / totalFDV : 0;
+            return formatCoinMessage(coin.name, data, fdvRatio);
+        })
         .join('\n\n');
 
     cachedData = `Date: ${currentTime.toLocaleString()} (UTC)\n\n${messages}`;
