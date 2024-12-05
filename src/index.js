@@ -12,12 +12,15 @@ const COINS = {
 };
 
 const UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes in milliseconds
+const GAS_PRICE_CACHE_DURATION = 60 * 1000; // 1 minute in milliseconds
 
 // Create a bot instance
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
 
 let cachedData = null;
 let lastFetchTime = null;
+let cachedGasPrices = null;
+let lastGasPriceFetchTime = null;
 
 const formatValue = (value) => {
     if (!value) return 'N/A';
@@ -108,6 +111,13 @@ bot.onText(/\/check_scroll_ranking/, async (msg) => {
 
 // Add this new function to fetch gas prices
 async function fetchGasPrice() {
+    // Check if cache is valid
+    const now = Date.now();
+    if (cachedGasPrices && lastGasPriceFetchTime && 
+        (now - lastGasPriceFetchTime) < GAS_PRICE_CACHE_DURATION) {
+        return cachedGasPrices;
+    }
+
     const RPC_ENDPOINTS = {
         ethereum: 'https://rpc.mevblocker.io',
         zksync: 'https://mainnet.era.zksync.io',
@@ -147,7 +157,7 @@ async function fetchGasPrice() {
 
         const [ethGas, zksyncGas, taikoGas, scrollGas] = results;
 
-        return `🔄 Current Gas Prices (Gwei):
+        const message = `🔄 Current Gas Prices (Gwei):
 
 ⬙ Ethereum: ${ethGas ? ethGas.toFixed(2) : 'N/A'}
 ⇆ ZkSync: ${zksyncGas ? zksyncGas.toFixed(2) : 'N/A'}
@@ -155,6 +165,12 @@ async function fetchGasPrice() {
 📜 Scroll: ${scrollGas ? scrollGas.toFixed(2) : 'N/A'}
 
 Updated: ${new Date().toLocaleString()} UTC`;
+
+        // Update cache
+        cachedGasPrices = message;
+        lastGasPriceFetchTime = now;
+
+        return message;
     } catch (error) {
         console.error('Error fetching gas prices:', error.message);
         return 'Sorry, there was an error fetching gas prices. Please try again later.';
