@@ -106,6 +106,68 @@ bot.onText(/\/check_scroll_ranking/, async (msg) => {
     }
 });
 
+// Add this new function to fetch gas prices
+async function fetchGasPrice() {
+    const RPC_ENDPOINTS = {
+        ethereum: 'https://rpc.mevblocker.io',
+        zksync: 'https://mainnet.era.zksync.io',
+        taiko: 'https://rpc.mainnet.taiko.xyz',
+        scroll: 'https://rpc.scroll.io'
+    };
+
+    const fetchSingleGasPrice = async (endpoint) => {
+        try {
+            const response = await axios.post(endpoint, {
+                jsonrpc: '2.0',
+                method: 'eth_gasPrice',
+                params: [],
+                id: 1
+            });
+
+            if (response.data.result) {
+                const gasPriceWei = parseInt(response.data.result, 16);
+                const gasPriceGwei = gasPriceWei / 1e9;
+                return gasPriceGwei;
+            }
+            throw new Error('Invalid response from RPC endpoint');
+        } catch (error) {
+            console.error(`Error fetching gas price from ${endpoint}:`, error.message);
+            return null;
+        }
+    };
+
+    try {
+        // Fetch all gas prices in parallel
+        const results = await Promise.all([
+            fetchSingleGasPrice(RPC_ENDPOINTS.ethereum),
+            fetchSingleGasPrice(RPC_ENDPOINTS.zksync),
+            fetchSingleGasPrice(RPC_ENDPOINTS.taiko),
+            fetchSingleGasPrice(RPC_ENDPOINTS.scroll)
+        ]);
+
+        const [ethGas, zksyncGas, taikoGas, scrollGas] = results;
+
+        return `🔄 Current Gas Prices (Gwei):
+
+⛽️ Ethereum: ${ethGas ? ethGas.toFixed(2) : 'N/A'}
+⚡️ ZkSync: ${zksyncGas ? zksyncGas.toFixed(2) : 'N/A'}
+🌐 Taiko: ${taikoGas ? taikoGas.toFixed(2) : 'N/A'}
+📜 Scroll: ${scrollGas ? scrollGas.toFixed(2) : 'N/A'}
+
+Updated: ${new Date().toLocaleString()} UTC`;
+    } catch (error) {
+        console.error('Error fetching gas prices:', error.message);
+        return 'Sorry, there was an error fetching gas prices. Please try again later.';
+    }
+}
+
+// Add this new command handler (add it before the error handler)
+bot.onText(/\/get_current_gas_price/, async (msg) => {
+    const chatId = msg.chat.id;
+    const gasPriceMessage = await fetchGasPrice();
+    await bot.sendMessage(chatId, gasPriceMessage);
+});
+
 // Error handler for the bot
 bot.on('error', (error) => {
     console.error('Bot error:', error.message);
