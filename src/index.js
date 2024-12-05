@@ -149,9 +149,9 @@ async function fetchGasPrice() {
 
         return `🔄 Current Gas Prices (Gwei):
 
-⛽️ Ethereum: ${ethGas ? ethGas.toFixed(2) : 'N/A'}
-⚡️ ZkSync: ${zksyncGas ? zksyncGas.toFixed(2) : 'N/A'}
-🌐 Taiko: ${taikoGas ? taikoGas.toFixed(2) : 'N/A'}
+⬙ Ethereum: ${ethGas ? ethGas.toFixed(2) : 'N/A'}
+⇆ ZkSync: ${zksyncGas ? zksyncGas.toFixed(2) : 'N/A'}
+▲ Taiko: ${taikoGas ? taikoGas.toFixed(2) : 'N/A'}
 📜 Scroll: ${scrollGas ? scrollGas.toFixed(2) : 'N/A'}
 
 Updated: ${new Date().toLocaleString()} UTC`;
