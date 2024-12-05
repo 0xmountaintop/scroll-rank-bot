@@ -55,9 +55,12 @@ const fetchCoinData = async (coinId) => {
 const formatCoinMessage = (coinName, data, fdvRatio) => {
     if (!data) return `${coinName}:\nData unavailable`;
     
+    // Determine the arrow based on the price change percentage
+    const changeArrow = data.price_change_percentage_24h > 0 ? '⬆️' : data.price_change_percentage_24h < 0 ? '⬇️' : '';
+
     return `${coinName}:
 - Price: ${formatPrice(data.price)}
-- 24h Change: ${data.price_change_percentage_24h}%
+- 24h Change: ${changeArrow} ${data.price_change_percentage_24h}%
 - 24h Volume (USD): ${formatValue(data.volume_24h)}
 - Market Cap: ${formatValue(data.marketCap)}
 - FDV: ${formatValue(data.fullyDilutedValuation)}
