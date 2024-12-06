@@ -120,7 +120,6 @@ func formatCoinMessage(coinName string, data *CoinData, fdvRatio float64) string
 - 24h Price Change: %.2f%% %s
 - 24h Volume (USD): %s
 - Market Cap: %s
-- 24h MC Change: %.2f%% %s
 - FDV: %s
 - FDV Ratio: %.2f%%`,
 		coinName,
@@ -129,8 +128,6 @@ func formatCoinMessage(coinName string, data *CoinData, fdvRatio float64) string
 		priceChangeArrow,
 		formatValue(data.Volume24h.USD),
 		formatValue(data.MarketCap.USD),
-		data.MarketCapChangePercentage24h,
-		marketCapChangeArrow,
 		formatValue(data.FullyDilutedValuation.USD),
 		fdvRatio*100)
 }
@@ -174,13 +171,13 @@ func updateData() {
 	sort.Slice(results, func(i, j int) bool {
 		return results[i].Data.FullyDilutedValuation.USD > results[j].Data.FullyDilutedValuation.USD
 	})
-	for _, coinData := range results {
-		data := coinData.Data
+	for _, wrappedCoinData := range results {
+		data := wrappedCoinData.Data
 		var fdvRatio float64
 		if data != nil && totalFDV > 0 {
 			fdvRatio = data.FullyDilutedValuation.USD / totalFDV
 		}
-		messages = append(messages, formatCoinMessage(coinData.ID, data, fdvRatio))
+		messages = append(messages, formatCoinMessage(wrappedCoinData.ID, data, fdvRatio))
 	}
 
 	mutex.Lock()
