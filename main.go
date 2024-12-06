@@ -20,12 +20,17 @@ type Coin struct {
 	ID   string
 }
 
+type MultiCurrency struct {
+	USD float64 `json:"usd"`
+}
+
 type CoinData struct {
-	Price                    float64 `json:"current_price"`
-	MarketCap                float64 `json:"market_cap"`
-	FullyDilutedValuation    float64 `json:"fully_diluted_valuation"`
-	PriceChangePercentage24h float64 `json:"price_change_percentage_24h"`
-	Volume24h                float64 `json:"total_volume"`
+	Price                        MultiCurrency `json:"current_price"`
+	PriceChangePercentage24h     float64       `json:"price_change_percentage_24h"`
+	MarketCap                    MultiCurrency `json:"market_cap"`
+	FullyDilutedValuation        MultiCurrency `json:"fully_diluted_valuation"`
+	MarketCapChangePercentage24h MultiCurrency `json:"market_cap_change_percentage_24h"`
+	Volume24h                    MultiCurrency `json:"total_volume"`
 }
 
 type CoinGeckoResponse struct {
@@ -90,27 +95,37 @@ func formatCoinMessage(coinName string, data *CoinData, fdvRatio float64) string
 		return fmt.Sprintf("%s:\nData unavailable", coinName)
 	}
 
-	changeArrow := ""
+	priceChangeArrow := ""
 	if data.PriceChangePercentage24h > 0 {
-		changeArrow = "⬆️"
+		priceChangeArrow = "⬆️"
 	} else if data.PriceChangePercentage24h < 0 {
-		changeArrow = "⬇️"
+		priceChangeArrow = "⬇️"
+	}
+
+	marketCapChangeArrow := ""
+	if data.MarketCapChangePercentage24h.USD > 0 {
+		marketCapChangeArrow = "⬆️"
+	} else if data.MarketCapChangePercentage24h.USD < 0 {
+		marketCapChangeArrow = "⬇️"
 	}
 
 	return fmt.Sprintf(`%s:
 - Price: %s
-- 24h Change: %s %.2f%%
+- 24h Price Change: %.2f%% %s
 - 24h Volume (USD): %s
 - Market Cap: %s
+- 24h MC Change: %.2f%% %s
 - FDV: %s
 - FDV Ratio: %.2f%%`,
 		coinName,
-		formatPrice(data.Price),
-		changeArrow,
+		formatPrice(data.Price.USD),
 		data.PriceChangePercentage24h,
-		formatValue(data.Volume24h),
-		formatValue(data.MarketCap),
-		formatValue(data.FullyDilutedValuation),
+		priceChangeArrow,
+		formatValue(data.Volume24h.USD),
+		formatValue(data.MarketCap.USD),
+		data.MarketCapChangePercentage24h.USD,
+		marketCapChangeArrow,
+		formatValue(data.FullyDilutedValuation.USD),
 		fdvRatio*100)
 }
 
@@ -154,7 +169,7 @@ func updateData() {
 	var totalFDV float64
 	for _, data := range results {
 		if data != nil {
-			totalFDV += data.FullyDilutedValuation
+			totalFDV += data.FullyDilutedValuation.USD
 		}
 	}
 
@@ -163,7 +178,7 @@ func updateData() {
 		data := results[coin.ID]
 		var fdvRatio float64
 		if data != nil && totalFDV > 0 {
-			fdvRatio = data.FullyDilutedValuation / totalFDV
+			fdvRatio = data.FullyDilutedValuation.USD / totalFDV
 		}
 		messages = append(messages, formatCoinMessage(coin.Name, data, fdvRatio))
 	}
