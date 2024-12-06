@@ -108,12 +108,12 @@ func formatCoinMessage(coinName string, data *CoinData, fdvRatio float64) string
 		priceChangeArrow = "⬇️"
 	}
 
-	marketCapChangeArrow := ""
-	if data.MarketCapChangePercentage24h > 0 {
-		marketCapChangeArrow = "⬆️"
-	} else if data.MarketCapChangePercentage24h < 0 {
-		marketCapChangeArrow = "⬇️"
-	}
+	// marketCapChangeArrow := ""
+	// if data.MarketCapChangePercentage24h > 0 {
+	// 	marketCapChangeArrow = "⬆️"
+	// } else if data.MarketCapChangePercentage24h < 0 {
+	// 	marketCapChangeArrow = "⬇️"
+	// }
 
 	return fmt.Sprintf(`%s:
 - Price: %s
