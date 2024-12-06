@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -22,6 +23,11 @@ type Coin struct {
 
 type MultiCurrency struct {
 	USD float64 `json:"usd"`
+}
+
+type WrappedCoinData struct {
+	ID   string
+	Data *CoinData
 }
 
 type CoinData struct {
@@ -130,12 +136,9 @@ func formatCoinMessage(coinName string, data *CoinData, fdvRatio float64) string
 }
 
 func updateData() {
-	results := make(map[string]*CoinData)
+	results := make([]WrappedCoinData, 0, len(coins))
 	var wg sync.WaitGroup
-	resultsChan := make(chan struct {
-		id   string
-		data *CoinData
-	}, len(coins))
+	resultsChan := make(chan WrappedCoinData, len(coins))
 
 	for _, coin := range coins {
 		wg.Add(1)
@@ -144,16 +147,10 @@ func updateData() {
 			data, err := fetchCoinData(coin.ID)
 			if err != nil {
 				log.Printf("Error fetching data for %s: %v", coin.ID, err)
-				resultsChan <- struct {
-					id   string
-					data *CoinData
-				}{coin.ID, nil}
+				resultsChan <- WrappedCoinData{ID: coin.ID, Data: nil}
 				return
 			}
-			resultsChan <- struct {
-				id   string
-				data *CoinData
-			}{coin.ID, data}
+			resultsChan <- WrappedCoinData{ID: coin.ID, Data: data}
 		}(coin)
 	}
 
@@ -163,24 +160,27 @@ func updateData() {
 	}()
 
 	for result := range resultsChan {
-		results[result.id] = result.data
+		results = append(results, result)
 	}
 
 	var totalFDV float64
 	for _, data := range results {
-		if data != nil {
-			totalFDV += data.FullyDilutedValuation.USD
+		if data.Data != nil {
+			totalFDV += data.Data.FullyDilutedValuation.USD
 		}
 	}
 
 	var messages []string
-	for _, coin := range coins {
-		data := results[coin.ID]
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Data.FullyDilutedValuation.USD > results[j].Data.FullyDilutedValuation.USD
+	})
+	for _, coinData := range results {
+		data := coinData.Data
 		var fdvRatio float64
 		if data != nil && totalFDV > 0 {
 			fdvRatio = data.FullyDilutedValuation.USD / totalFDV
 		}
-		messages = append(messages, formatCoinMessage(coin.Name, data, fdvRatio))
+		messages = append(messages, formatCoinMessage(coinData.ID, data, fdvRatio))
 	}
 
 	mutex.Lock()
