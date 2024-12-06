@@ -29,7 +29,7 @@ type CoinData struct {
 	PriceChangePercentage24h     float64       `json:"price_change_percentage_24h"`
 	MarketCap                    MultiCurrency `json:"market_cap"`
 	FullyDilutedValuation        MultiCurrency `json:"fully_diluted_valuation"`
-	MarketCapChangePercentage24h MultiCurrency `json:"market_cap_change_percentage_24h"`
+	MarketCapChangePercentage24h float64       `json:"market_cap_change_percentage_24h"`
 	Volume24h                    MultiCurrency `json:"total_volume"`
 }
 
@@ -103,9 +103,9 @@ func formatCoinMessage(coinName string, data *CoinData, fdvRatio float64) string
 	}
 
 	marketCapChangeArrow := ""
-	if data.MarketCapChangePercentage24h.USD > 0 {
+	if data.MarketCapChangePercentage24h > 0 {
 		marketCapChangeArrow = "⬆️"
-	} else if data.MarketCapChangePercentage24h.USD < 0 {
+	} else if data.MarketCapChangePercentage24h < 0 {
 		marketCapChangeArrow = "⬇️"
 	}
 
@@ -123,7 +123,7 @@ func formatCoinMessage(coinName string, data *CoinData, fdvRatio float64) string
 		priceChangeArrow,
 		formatValue(data.Volume24h.USD),
 		formatValue(data.MarketCap.USD),
-		data.MarketCapChangePercentage24h.USD,
+		data.MarketCapChangePercentage24h,
 		marketCapChangeArrow,
 		formatValue(data.FullyDilutedValuation.USD),
 		fdvRatio*100)
