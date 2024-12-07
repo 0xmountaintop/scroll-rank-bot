@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"telegrambot/internal/bot"
+	"scroll-rank-bot/internal/bot"
 
 	"github.com/joho/godotenv"
 )

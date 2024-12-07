@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"telegrambot/internal/models"
+	"scroll-rank-bot/internal/models"
 )
 
 type PriceService struct {

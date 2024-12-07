@@ -8,25 +8,27 @@ import (
 	"sync"
 	"time"
 
-	"telegrambot/internal/coingecko"
-	"telegrambot/internal/gas"
-	"telegrambot/internal/models"
+	"scroll-rank-bot/internal/coingecko"
+	"scroll-rank-bot/internal/gas"
+	"scroll-rank-bot/internal/models"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 type Bot struct {
-	api            *tgbotapi.BotAPI
-	coingecko      *coingecko.Client
-	gasService     *gas.PriceService
-	coins          map[string]models.Coin
-	cachedData     string
-	cachedGas      string
-	lastFetchTime  time.Time
-	lastGasTime    time.Time
-	mutex          sync.RWMutex
-	updateInterval time.Duration
-	gasCacheDur    time.Duration
+	api   *tgbotapi.BotAPI
+	coins map[string]models.Coin
+	mutex sync.RWMutex
+
+	coingecko              *coingecko.Client
+	coindataUpdateInterval time.Duration
+	lastCoingeckoTime      time.Time
+	cachedData             string
+
+	gasService  *gas.PriceService
+	gasCacheDur time.Duration
+	lastGasTime time.Time
+	cachedGas   string
 }
 
 func New(token string) (*Bot, error) {
@@ -36,11 +38,11 @@ func New(token string) (*Bot, error) {
 	}
 
 	return &Bot{
-		api:            api,
-		coingecko:      coingecko.NewClient(),
-		gasService:     gas.NewPriceService(),
-		updateInterval: 5 * time.Minute,
-		gasCacheDur:    1 * time.Minute,
+		api:                    api,
+		coingecko:              coingecko.NewClient(),
+		gasService:             gas.NewPriceService(),
+		coindataUpdateInterval: 5 * time.Minute,
+		gasCacheDur:            1 * time.Minute,
 		coins: map[string]models.Coin{
 			"starknet": {Name: "Starknet", ID: "starknet"},
 			"zksync":   {Name: "ZkSync", ID: "zksync"},
@@ -53,8 +55,8 @@ func New(token string) (*Bot, error) {
 func (b *Bot) Start() {
 	log.Printf("Authorized on account %s", b.api.Self.UserName)
 
-	b.updateData()
-	go b.startUpdateTicker()
+	b.updateCoinData()
+	go b.startUpdateCoindataTicker()
 
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
@@ -84,14 +86,14 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
 	}
 }
 
-func (b *Bot) startUpdateTicker() {
-	ticker := time.NewTicker(b.updateInterval)
+func (b *Bot) startUpdateCoindataTicker() {
+	ticker := time.NewTicker(b.coindataUpdateInterval)
 	for range ticker.C {
-		b.updateData()
+		b.updateCoinData()
 	}
 }
 
-func (b *Bot) updateData() {
+func (b *Bot) updateCoinData() {
 	var wg sync.WaitGroup
 	results := make(chan struct {
 		id   string
@@ -140,7 +142,7 @@ func (b *Bot) updateData() {
 
 	b.mutex.Lock()
 	b.cachedData = b.formatCoinData(coinDataList)
-	b.lastFetchTime = time.Now()
+	b.lastCoingeckoTime = time.Now()
 	b.mutex.Unlock()
 
 	log.Printf("Data updated successfully at %v", time.Now())

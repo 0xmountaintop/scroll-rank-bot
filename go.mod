@@ -1,4 +1,4 @@
-module telegrambot
+module scroll-rank-bot
 
 go 1.21
 

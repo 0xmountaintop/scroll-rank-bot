@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"telegrambot/internal/models"
+	"scroll-rank-bot/internal/models"
 )
 
 type Client struct {
