@@ -21,14 +21,14 @@ type Bot struct {
 	mutex sync.RWMutex
 
 	coingecko              *coingecko.Client
-	coindataUpdateInterval time.Duration
+	coinDataUpdateInterval time.Duration
 	lastCoingeckoTime      time.Time
-	cachedData             string
+	cachedCoinDataRespMsg  string
 
-	gasService  *gas.PriceService
-	gasCacheDur time.Duration
-	lastGasTime time.Time
-	cachedGas   string
+	gasService *gas.PriceService
+	// gasCacheDur time.Duration
+	// lastGasTime time.Time
+	// cachedGas   string
 }
 
 func New(token string) (*Bot, error) {
@@ -41,8 +41,8 @@ func New(token string) (*Bot, error) {
 		api:                    api,
 		coingecko:              coingecko.NewClient(),
 		gasService:             gas.NewPriceService(),
-		coindataUpdateInterval: 5 * time.Minute,
-		gasCacheDur:            1 * time.Minute,
+		coinDataUpdateInterval: 5 * time.Minute,
+		// gasCacheDur:            1 * time.Minute,
 		coins: map[string]models.Coin{
 			"starknet": {Name: "Starknet", ID: "starknet"},
 			"zksync":   {Name: "ZkSync", ID: "zksync"},
@@ -74,7 +74,7 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
 		switch update.Message.Command() {
 		case "check_scroll_ranking":
 			b.mutex.RLock()
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, b.cachedData)
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, b.cachedCoinDataRespMsg)
 			b.mutex.RUnlock()
 			b.api.Send(msg)
 
@@ -87,7 +87,7 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
 }
 
 func (b *Bot) startUpdateCoindataTicker() {
-	ticker := time.NewTicker(b.coindataUpdateInterval)
+	ticker := time.NewTicker(b.coinDataUpdateInterval)
 	for range ticker.C {
 		b.updateCoinData()
 	}
@@ -141,7 +141,7 @@ func (b *Bot) updateCoinData() {
 	})
 
 	b.mutex.Lock()
-	b.cachedData = b.formatCoinData(coinDataList)
+	b.cachedCoinDataRespMsg = b.formatCoinData(coinDataList)
 	b.lastCoingeckoTime = time.Now()
 	b.mutex.Unlock()
 
