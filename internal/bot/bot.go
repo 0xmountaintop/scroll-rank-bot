@@ -48,6 +48,7 @@ func New(token string) (*Bot, error) {
 			"zksync":   {Name: "ZkSync", ID: "zksync"},
 			"taiko":    {Name: "Taiko", ID: "taiko"},
 			"scroll":   {Name: "Scroll", ID: "scroll"},
+			"movement": {Name: "Movement", ID: "movement"},
 		},
 	}, nil
 }
