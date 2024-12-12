@@ -40,6 +40,7 @@ var shilTexts = []string{
 	"上线交易所不是SCR的利好。SCR上线交易所是交易所的利好。",
 	"我并不觉得SOL会成为SCR的对手，超越SOL这样的目标，对SCR来说显得太小。",
 	"未来，你会发现你根本不在乎生活品质，持SCR在手就是最高生活品质。",
+	"I'll buy as much $SCR as you have, right now, at 0.7. Sell me all you want. Then go fuck off.",
 }
 
 func New(token string) (*Bot, error) {
