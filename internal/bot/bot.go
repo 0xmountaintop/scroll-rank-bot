@@ -1,9 +1,10 @@
 package bot
 
 import (
+	"context"
 	"fmt"
 	"log"
-	"math/rand"
+	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -14,6 +15,7 @@ import (
 	"scroll-rank-bot/internal/models"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/sashabaranov/go-openai"
 )
 
 type Bot struct {
@@ -30,6 +32,8 @@ type Bot struct {
 	// gasCacheDur time.Duration
 	// lastGasTime time.Time
 	// cachedGas   string
+
+	openaiClient *openai.Client
 }
 
 func New(token string) (*Bot, error) {
@@ -37,6 +41,15 @@ func New(token string) (*Bot, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create bot: %w", err)
 	}
+
+	openAIKey := os.Getenv("OPENAI_API_KEY")
+	if openAIKey == "" {
+		log.Fatal("Error: OpenAI API key not set")
+	}
+
+	openaiCfg := openai.DefaultConfig(openAIKey)
+	openaiCfg.BaseURL = "https://api.deepseek.com"
+	openaiClient := openai.NewClientWithConfig(openaiCfg)
 
 	return &Bot{
 		api:                    api,
@@ -51,6 +64,7 @@ func New(token string) (*Bot, error) {
 			"scroll":   {Name: "Scroll", ID: "scroll"},
 			"movement": {Name: "Movement", ID: "movement"},
 		},
+		openaiClient: openaiClient,
 	}, nil
 }
 
@@ -86,11 +100,40 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
 			b.api.Send(msg)
 
 		case "shill_scroll":
-			shillText := shilTexts[rand.Intn(len(shilTexts))]
+			// shillText := shilTexts[rand.Intn(len(shilTexts))]
+			shillText := genShillText(b.openaiClient)
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, shillText)
 			b.api.Send(msg)
 		}
 	}
+}
+
+func genShillText(openaiClient *openai.Client) string {
+	prompt := fmt.Sprintf(`你是个很有感染力、口才很好、很会洗脑的人，用一句简明扼要的话来奶 $SCR`)
+
+	resp, err := openaiClient.CreateChatCompletion(
+		context.Background(),
+		openai.ChatCompletionRequest{
+			// Model: openai.GPT3Dot5Turbo,
+			Model: "deepseek-chat",
+			Messages: []openai.ChatCompletionMessage{
+				{
+					Role:    openai.ChatMessageRoleUser,
+					Content: prompt,
+				},
+			},
+			MaxTokens: 8192,
+		},
+	)
+	if err != nil {
+		return fmt.Sprintf("Error CreateChatCompletion: %v", err)
+	}
+
+	if len(resp.Choices) == 0 {
+		return "Error: No choice"
+	}
+
+	return resp.Choices[0].Message.Content
 }
 
 func (b *Bot) startUpdateCoindataTicker() {
