@@ -109,7 +109,7 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
 }
 
 func genShillText(openaiClient *openai.Client) string {
-	prompt := fmt.Sprintf(`你是个很有感染力、口才很好、很会洗脑的人，用一句简明扼要的话来奶 $SCR`)
+	prompt := fmt.Sprintf(`你是个很有感染力、口才很好、辞藻丰富、很会洗脑的人，用一句简明扼要的话来奶 $SCR。你每次会想出不同的措辞。`)
 
 	resp, err := openaiClient.CreateChatCompletion(
 		context.Background(),
