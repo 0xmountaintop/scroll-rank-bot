@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"sort"
 	"strings"
@@ -17,8 +18,6 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/sashabaranov/go-openai"
 )
-
-var shilled = []string{}
 
 type Bot struct {
 	api   *tgbotapi.BotAPI
@@ -111,10 +110,7 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
 }
 
 func genShillText(openaiClient *openai.Client) string {
-	prompt := fmt.Sprintf(`你是个很有感染力、口才很好、辞藻丰富、很会洗脑的人，用一句简明扼要的话来奶 $SCR。你每次会使用不同的措辞。假如你想出了多条回复，请只从中挑选一条进行回复。`)
-	if len(shilled) > 0 {
-		prompt += fmt.Sprintf(`\n\n以下是之前回复过的内容，请不要重复类似的内容：\n%s`, strings.Join(shilled, "\n"))
-	}
+	prompt := fmt.Sprintf(`你是个很有感染力、口才很好、辞藻丰富、很会洗脑的人，用一句简明扼要的话来奶 $SCR。你每次会使用不同的措辞。`)
 
 	resp, err := openaiClient.CreateChatCompletion(
 		context.Background(),
@@ -139,8 +135,16 @@ func genShillText(openaiClient *openai.Client) string {
 	}
 
 	shillText := resp.Choices[0].Message.Content
-	shilled = append(shilled, shillText)
-	return shillText
+
+	// if shilltext is list 1. 2. 3... 10
+	// return a random one
+	for i := 1; i <= 20; i++ {
+		shillText = strings.ReplaceAll(shillText, fmt.Sprintf("%d. ", i), "")
+	}
+
+	shillTexts := strings.Split(shillText, "\n")
+	return shillTexts[rand.Intn(len(shillTexts))]
+
 }
 
 func (b *Bot) startUpdateCoindataTicker() {
