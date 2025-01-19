@@ -18,6 +18,8 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
+var shilled = []string{}
+
 type Bot struct {
 	api   *tgbotapi.BotAPI
 	coins map[string]models.Coin
@@ -109,7 +111,10 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
 }
 
 func genShillText(openaiClient *openai.Client) string {
-	prompt := fmt.Sprintf(`你是个很有感染力、口才很好、辞藻丰富、很会洗脑的人，用一句简明扼要的话来奶 $SCR。你每次会使用不同的措辞。`)
+	prompt := fmt.Sprintf(`你是个很有感染力、口才很好、辞藻丰富、很会洗脑的人，用一句简明扼要的话来奶 $SCR。你每次会使用不同的措辞。假如你想出了多条回复，请只从中挑选一条进行回复。`)
+	if len(shilled) > 0 {
+		prompt += fmt.Sprintf(`\n\n以下是之前回复过的内容，请不要重复类似的内容：\n%s`, strings.Join(shilled, "\n"))
+	}
 
 	resp, err := openaiClient.CreateChatCompletion(
 		context.Background(),
@@ -133,7 +138,9 @@ func genShillText(openaiClient *openai.Client) string {
 		return "Error: No choice"
 	}
 
-	return resp.Choices[0].Message.Content
+	shillText := resp.Choices[0].Message.Content
+	shilled = append(shilled, shillText)
+	return shillText
 }
 
 func (b *Bot) startUpdateCoindataTicker() {
