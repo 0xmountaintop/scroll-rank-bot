@@ -100,11 +100,11 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, b.formatGasPrices(gasPrices))
 			b.api.Send(msg)
 
-		case "shill_scroll":
-			// shillText := shilTexts[rand.Intn(len(shilTexts))]
-			shillText := genShillText(b.openaiClient)
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, shillText)
-			b.api.Send(msg)
+			// case "shill_scroll":
+			// 	// shillText := shilTexts[rand.Intn(len(shilTexts))]
+			// 	shillText := genShillText(b.openaiClient)
+			// 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, shillText)
+			// 	b.api.Send(msg)
 		}
 	}
 }
