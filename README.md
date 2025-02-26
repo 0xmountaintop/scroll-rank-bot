@@ -17,8 +17,8 @@ A Telegram bot that tracks and compares Layer 2 cryptocurrency prices, market da
 
 ## Commands
 
-- `/check_scroll_ranking` - Get current market data for $SCR and its competitors
-- `/get_current_gas_price` - Get current gas prices across scroll and its competitors' networks
+- `/rank` - Get current market data for $SCR and its competitors
+- `/gas_price` - Get current gas prices across scroll and its competitors' networks
 
 ## Environment Variables
 
@@ -81,4 +81,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 [MIT License](LICENSE)
-

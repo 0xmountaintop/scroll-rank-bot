@@ -89,13 +89,13 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
 		}
 
 		switch update.Message.Command() {
-		case "check_scroll_ranking":
+		case "rank":
 			b.mutex.RLock()
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, b.cachedCoinDataRespMsg)
 			b.mutex.RUnlock()
 			b.api.Send(msg)
 
-		case "get_current_gas_price":
+		case "gas_price":
 			gasPrices := b.gasService.FetchAllPrices()
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, b.formatGasPrices(gasPrices))
 			b.api.Send(msg)
