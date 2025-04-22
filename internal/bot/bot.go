@@ -59,11 +59,12 @@ func New(token string) (*Bot, error) {
 		coinDataUpdateInterval: 5 * time.Minute,
 		// gasCacheDur:            1 * time.Minute,
 		coins: map[string]models.Coin{
-			"starknet": {Name: "Starknet", ID: "starknet"},
-			"zksync":   {Name: "ZkSync", ID: "zksync"},
-			"taiko":    {Name: "Taiko", ID: "taiko"},
-			"scroll":   {Name: "Scroll", ID: "scroll"},
-			"movement": {Name: "Movement", ID: "movement"},
+			"starknet":  {Name: "Starknet", ID: "starknet"},
+			"zksync":    {Name: "ZkSync", ID: "zksync"},
+			"taiko":     {Name: "Taiko", ID: "taiko"},
+			"scroll":    {Name: "Scroll", ID: "scroll"},
+			"movement":  {Name: "Movement", ID: "movement"},
+			"polyhedra": {Name: "Polyhedra", ID: "polyhedra-network"},
 		},
 		openaiClient: openaiClient,
 	}, nil
