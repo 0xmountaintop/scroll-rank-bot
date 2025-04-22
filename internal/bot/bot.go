@@ -227,7 +227,7 @@ func (b *Bot) formatCoinData(data []struct {
 	// More compact date format
 	timestamp := time.Now().UTC().Format("2006-01-02 15:04 UTC")
 
-	return fmt.Sprintf("%s\n\n%s\n\n📊 Updated: %s",
+	return fmt.Sprintf("%s\n\n\n%s\n\n\n📊 Updated: %s",
 		header,
 		strings.Join(messages, "\n\n"),
 		timestamp)
