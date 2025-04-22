@@ -215,36 +215,62 @@ func (b *Bot) formatCoinData(data []struct {
 	data *models.CoinData
 }) string {
 	var messages []string
-	for _, item := range data {
-		messages = append(messages, b.formatSingleCoin(item.id, item.data))
+
+	// Add a header line with emojis
+	header := "🏆 L2 RANKINGS BY FDV 🏆"
+
+	for i, item := range data {
+		// Add ranking number for each coin
+		messages = append(messages, b.formatSingleCoin(i+1, item.id, item.data))
 	}
-	return fmt.Sprintf("Date: %s (UTC)\n\n%s",
-		time.Now().UTC().Format("2006-01-02 15:04:05"),
-		strings.Join(messages, "\n\n"))
+
+	// More compact date format
+	timestamp := time.Now().UTC().Format("2006-01-02 15:04 UTC")
+
+	return fmt.Sprintf("%s\n\n%s\n\n📊 Updated: %s",
+		header,
+		strings.Join(messages, "\n"),
+		timestamp)
 }
 
-func (b *Bot) formatSingleCoin(coinID string, data *models.CoinData) string {
+func (b *Bot) formatSingleCoin(rank int, coinID string, data *models.CoinData) string {
 	if data == nil {
-		return fmt.Sprintf("%s:\nData unavailable", coinID)
+		return fmt.Sprintf("#%d %s: Data unavailable", rank, coinID)
 	}
 
-	priceChangeArrow := ""
+	// Determine emoji based on rank
+	rankEmoji := ""
+	switch rank {
+	case 1:
+		rankEmoji = "🥇"
+	case 2:
+		rankEmoji = "🥈"
+	case 3:
+		rankEmoji = "🥉"
+	default:
+		rankEmoji = "▫️"
+	}
+
+	// Set price change arrow and color indicator (using emoji)
+	priceChangeIndicator := "➖"
 	if data.PriceChangePercentage24h > 0 {
-		priceChangeArrow = "⬆️"
+		priceChangeIndicator = "🟢"
 	} else if data.PriceChangePercentage24h < 0 {
-		priceChangeArrow = "⬇️"
+		priceChangeIndicator = "🔴"
 	}
 
-	return fmt.Sprintf(`%s:
-- Price: %s
-- 24h Price Change: %.2f%% %s
-- 24h Volume (USD): %s
-- Market Cap: %s
-- FDV: %s`,
-		coinID,
+	// Remove "-network" suffix if present and convert to title case
+	displayName := strings.Title(coinID)
+	displayName = strings.TrimSuffix(displayName, "-Network")
+
+	// More compact single-line format per coin
+	return fmt.Sprintf(`%s #%d %s | 💰 %s (%s%.2f%%) | 📈 Vol: %s | 💎 MC: %s | 🌐 FDV: %s`,
+		rankEmoji,
+		rank,
+		displayName,
 		formatPrice(data.Price.USD),
+		priceChangeIndicator,
 		data.PriceChangePercentage24h,
-		priceChangeArrow,
 		formatValue(data.Volume24h.USD),
 		formatValue(data.MarketCap.USD),
 		formatValue(data.FullyDilutedValuation.USD))
