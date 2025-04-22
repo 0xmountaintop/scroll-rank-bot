@@ -229,7 +229,7 @@ func (b *Bot) formatCoinData(data []struct {
 
 	return fmt.Sprintf("%s\n\n%s\n\n📊 Updated: %s",
 		header,
-		strings.Join(messages, "\n"),
+		strings.Join(messages, "\n\n"),
 		timestamp)
 }
 
