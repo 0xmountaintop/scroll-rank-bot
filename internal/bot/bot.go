@@ -65,6 +65,7 @@ func New(token string) (*Bot, error) {
 			"scroll":    {Name: "Scroll", ID: "scroll"},
 			"movement":  {Name: "Movement", ID: "movement"},
 			"polyhedra": {Name: "Polyhedra", ID: "polyhedra-network"},
+			"linea":     {Name: "Linea", ID: "linea"},
 		},
 		openaiClient: openaiClient,
 	}, nil

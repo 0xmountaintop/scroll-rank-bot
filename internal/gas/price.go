@@ -26,6 +26,7 @@ func NewPriceService() *PriceService {
 			"zksync":   "https://mainnet.era.zksync.io",
 			"taiko":    "https://rpc.mainnet.taiko.xyz",
 			"scroll":   "https://rpc.scroll.io",
+			"linea":    "https://rpc.linea.build",
 		},
 	}
 }
