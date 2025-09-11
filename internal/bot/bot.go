@@ -1,11 +1,8 @@
 package bot
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"math/rand"
-	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -16,7 +13,6 @@ import (
 	"scroll-rank-bot/internal/models"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/sashabaranov/go-openai"
 )
 
 type Bot struct {
@@ -33,8 +29,6 @@ type Bot struct {
 	// gasCacheDur time.Duration
 	// lastGasTime time.Time
 	// cachedGas   string
-
-	openaiClient *openai.Client
 }
 
 func New(token string) (*Bot, error) {
@@ -42,15 +36,6 @@ func New(token string) (*Bot, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create bot: %w", err)
 	}
-
-	openAIKey := os.Getenv("OPENAI_API_KEY")
-	if openAIKey == "" {
-		log.Fatal("Error: OpenAI API key not set")
-	}
-
-	openaiCfg := openai.DefaultConfig(openAIKey)
-	openaiCfg.BaseURL = "https://api.deepseek.com"
-	openaiClient := openai.NewClientWithConfig(openaiCfg)
 
 	return &Bot{
 		api:                    api,
@@ -67,7 +52,6 @@ func New(token string) (*Bot, error) {
 			"polyhedra": {Name: "Polyhedra", ID: "polyhedra-network"},
 			"linea":     {Name: "Linea", ID: "linea"},
 		},
-		openaiClient: openaiClient,
 	}, nil
 }
 
@@ -101,52 +85,8 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
 			gasPrices := b.gasService.FetchAllPrices()
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, b.formatGasPrices(gasPrices))
 			b.api.Send(msg)
-
-			// case "shill_scroll":
-			// 	// shillText := shilTexts[rand.Intn(len(shilTexts))]
-			// 	shillText := genShillText(b.openaiClient)
-			// 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, shillText)
-			// 	b.api.Send(msg)
 		}
 	}
-}
-
-func genShillText(openaiClient *openai.Client) string {
-	prompt := fmt.Sprintf(`你是个很有感染力、口才很好、辞藻丰富、很会洗脑的人，用一句简明扼要的话来奶 $SCR。你每次会使用不同的措辞。`)
-
-	resp, err := openaiClient.CreateChatCompletion(
-		context.Background(),
-		openai.ChatCompletionRequest{
-			// Model: openai.GPT3Dot5Turbo,
-			Model: "deepseek-chat",
-			Messages: []openai.ChatCompletionMessage{
-				{
-					Role:    openai.ChatMessageRoleUser,
-					Content: prompt,
-				},
-			},
-			MaxTokens: 8192,
-		},
-	)
-	if err != nil {
-		return fmt.Sprintf("Error CreateChatCompletion: %v", err)
-	}
-
-	if len(resp.Choices) == 0 {
-		return "Error: No choice"
-	}
-
-	shillText := resp.Choices[0].Message.Content
-
-	// if shilltext is list 1. 2. 3... 10
-	// return a random one
-	for i := 1; i <= 20; i++ {
-		shillText = strings.ReplaceAll(shillText, fmt.Sprintf("%d. ", i), "")
-	}
-
-	shillTexts := strings.Split(shillText, "\n")
-	return shillTexts[rand.Intn(len(shillTexts))]
-
 }
 
 func (b *Bot) startUpdateCoindataTicker() {
