@@ -36,121 +36,121 @@
 
 ## 代码结构与文件清单
 
-- [ ] `internal/market/aggregator.go`
-  - [ ] 聚合器结构体、构造器与 `FetchCoinData(coin models.Coin)` 主逻辑
-- [ ] `internal/exchanges/provider.go`
-  - [ ] Provider 接口、通用错误与 HTTP 工具（含 UA、超时）
-- [ ] `internal/exchanges/binance.go`
-- [ ] `internal/exchanges/okx.go`
-- [ ] `internal/exchanges/bybit.go`
-- [ ] `internal/exchanges/bitget.go`
-- [ ] `internal/models/supply.go`
-  - [ ] 供应与成交量快照结构体、TTL 常量与校验函数
-- [ ] `internal/models/symbols.go`
-  - [ ] 交易所交易对映射与加载逻辑（默认内置，可被 .env/JSON 覆盖）
-- [ ] 变更 `internal/bot/bot.go`
-  - [ ] 使用 Aggregator 替换直接调用 CoinGecko 的位置
+- [X] `internal/market/aggregator.go`
+  - [X] 聚合器结构体、构造器与 `FetchCoinData(coin models.Coin)` 主逻辑
+- [X] `internal/exchanges/provider.go`
+  - [X] Provider 接口、通用错误与 HTTP 工具（含 UA、超时）
+- [X] `internal/exchanges/binance.go`
+- [X] `internal/exchanges/okx.go`
+- [X] `internal/exchanges/bybit.go`
+- [X] `internal/exchanges/bitget.go`
+- [X] `internal/models/supply.go`
+  - [X] 供应与成交量快照结构体、TTL 常量与校验函数
+- [X] `internal/models/symbols.go`
+  - [X] 交易所交易对映射与加载逻辑（默认内置，可被 .env/JSON 覆盖）
+- [X] 变更 `internal/bot/bot.go`
+  - [X] 使用 Aggregator 替换直接调用 CoinGecko 的位置
 
 ---
 
 ## 数据模型与缓存设计
 
-- [ ] 在 `internal/models/supply.go` 定义：
-  - [ ] `type SupplySnapshot struct { Circulating float64; Full float64; TotalVolumeUSD float64; UpdatedAt time.Time }`
-  - [ ] TTL 策略：
-    - [ ] SUPPLY_TTL = 24h（Circulating/Full）
-    - [ ] VOLUME_TTL = 30m（TotalVolumeUSD）
-  - [ ] 校验方法：`ValidSupply(now time.Time) bool`、`ValidVolume(now time.Time) bool`
-- [ ] 在 `internal/market/aggregator.go` 中维护：
-  - [ ] `supplies map[string]SupplySnapshot`
-  - [ ] `mu sync.RWMutex` 保护并发访问
-  - [ ] `supplyTTL time.Duration`、`volumeTTL time.Duration`
-- [ ] 缓存更新：
-  - [ ] 来自 CG 的数据成功时计算并更新 `Circulating`、`Full`、`TotalVolumeUSD`
-  - [ ] `current_price == 0` 时跳过供应计算避免除零
-- [ ] 缓存读取（回退路径）：
-  - [ ] 读取并校验 TTL，过期则返回 0（对应 UI 将显示 N/A）
+- [X] 在 `internal/models/supply.go` 定义：
+  - [X] `type SupplySnapshot struct { Circulating float64; Full float64; TotalVolumeUSD float64; UpdatedAt time.Time }`
+  - [X] TTL 策略：
+    - [X] SUPPLY_TTL = 24h（Circulating/Full）
+    - [X] VOLUME_TTL = 30m（TotalVolumeUSD）
+  - [X] 校验方法：`ValidSupply(now time.Time) bool`、`ValidVolume(now time.Time) bool`
+- [X] 在 `internal/market/aggregator.go` 中维护：
+  - [X] `supplies map[string]SupplySnapshot`
+  - [X] `mu sync.RWMutex` 保护并发访问
+  - [X] `supplyTTL time.Duration`、`volumeTTL time.Duration`
+- [X] 缓存更新：
+  - [X] 来自 CG 的数据成功时计算并更新 `Circulating`、`Full`、`TotalVolumeUSD`
+  - [X] `current_price == 0` 时跳过供应计算避免除零
+- [X] 缓存读取（回退路径）：
+  - [X] 读取并校验 TTL，过期则返回 0（对应 UI 将显示 N/A）
 
 ---
 
 ## Provider 接口与错误
 
-- [ ] 在 `internal/exchanges/provider.go` 定义：
-  - [ ] `type Provider interface { Name() string; GetPriceAndChange(symbol string) (price float64, changePct24h float64, err error) }`
-  - [ ] 错误：
-    - [ ] `ErrSymbolNotSupported`（该交易所无此交易对）
-    - [ ] `ErrRateLimited`（HTTP 429 或明确的限频返回）
-    - [ ] 其它错误统一包装并包含 `provider` 与 `symbol` 便于日志定位
-  - [ ] 公共 HTTP 客户端：
-    - [ ] `http.Client` 带 5–10s 超时
-    - [ ] 统一 `User-Agent`
-    - [ ] JSON 解析工具与错误封装
+- [X] 在 `internal/exchanges/provider.go` 定义：
+  - [X] `type Provider interface { Name() string; GetPriceAndChange(symbol string) (price float64, changePct24h float64, err error) }`
+  - [X] 错误：
+    - [X] `ErrSymbolNotSupported`（该交易所无此交易对）
+    - [X] `ErrRateLimited`（HTTP 429 或明确的限频返回）
+    - [X] 其它错误统一包装并包含 `provider` 与 `symbol` 便于日志定位
+  - [X] 公共 HTTP 客户端：
+    - [X] `http.Client` 带 5–10s 超时
+    - [X] 统一 `User-Agent`
+    - [X] JSON 解析工具与错误封装
 
 ---
 
 ## 各交易所 Provider 细节（现均支持公开 REST，无需鉴权）
 
-- [ ] Binance（优先）
-  - [ ] 接口：`GET /api/v3/ticker/24hr?symbol=SYMBOL`
-  - [ ] 字段：`lastPrice`（价格），`priceChangePercent`（24h 涨跌百分比，字符串，需解析为 float）
-  - [ ] 注意：429 映射为 `ErrRateLimited`；HTTP 非 2xx 统一为错误
+- [X] Binance（优先）
+  - [X] 接口：`GET /api/v3/ticker/24hr?symbol=SYMBOL`
+  - [X] 字段：`lastPrice`（价格），`priceChangePercent`（24h 涨跌百分比，字符串，需解析为 float）
+  - [X] 注意：429 映射为 `ErrRateLimited`；HTTP 非 2xx 统一为错误
 
-- [ ] OKX（第二）
-  - [ ] 接口：`GET /api/v5/market/ticker?instId=BASE-USDT`（现货）
-  - [ ] 字段：`data[0].last`（价格），`data[0].open24h`（24h 开盘价）
-  - [ ] 计算：`changePct24h = (last/open24h - 1) * 100`
+- [X] OKX（第二）
+  - [X] 接口：`GET /api/v5/market/ticker?instId=BASE-USDT`（现货）
+  - [X] 字段：`data[0].last`（价格），`data[0].open24h`（24h 开盘价）
+  - [X] 计算：`changePct24h = (last/open24h - 1) * 100`
 
-- [ ] Bybit（第三）
-  - [ ] 接口：`GET /v5/market/tickers?category=spot&symbol=SYMBOL`
-  - [ ] 字段：`result.list[0].lastPrice`（价格），`result.list[0].price24hPcnt`（小数比例，乘 100 转百分比）
+- [X] Bybit（第三）
+  - [X] 接口：`GET /v5/market/tickers?category=spot&symbol=SYMBOL`
+  - [X] 字段：`result.list[0].lastPrice`（价格），`result.list[0].price24hPcnt`（小数比例，乘 100 转百分比）
 
-- [ ] Bitget（第四）
-  - [ ] 接口（其一）：`GET /api/spot/v1/market/ticker?symbol=SYMBOL`
-  - [ ] 字段：`data.close`（价格），`data.open`（开盘）
-  - [ ] 计算：`changePct24h = (close/open - 1) * 100`
+- [X] Bitget（第四）
+  - [X] 接口（其一）：`GET /api/spot/v1/market/ticker?symbol=SYMBOL`
+  - [X] 字段：`data.close`（价格），`data.open`（开盘）
+  - [X] 计算：`changePct24h = (close/open - 1) * 100`
 
 ---
 
 ## 交易对映射（Symbol Mapping）
 
-- [ ] 在 `internal/models/symbols.go`：
-  - [ ] `type ExchangeSymbols struct { Binance string; OKX string; Bybit string; Bitget string }`
-  - [ ] `var Symbols map[string]ExchangeSymbols` // key 为 `models.Coin.ID`
-  - [ ] 提供加载覆盖：
-    - [ ] 支持从 `.env` 指定的 JSON 文件路径（如 `SYMBOLS_JSON`）加载映射并覆盖默认值
-    - [ ] 若缺失或为空则使用内置默认映射
-  - [ ] TODO：为当前币种补齐真实交易对（需人工确认）：
-    - [ ] starknet（ID: starknet）
-    - [ ] zksync（ID: zksync）
-    - [ ] taiko（ID: taiko）
-    - [ ] scroll（ID: scroll）
-    - [ ] movement（ID: movement）
-    - [ ] polyhedra-network（ID: polyhedra-network）
-    - [ ] linea（ID: linea）
-  - [ ] 若某交易所无该交易对：对应字段置空，Provider 返回 `ErrSymbolNotSupported`，Aggregator 继续尝试下一个
+- [X] 在 `internal/models/symbols.go`：
+  - [X] `type ExchangeSymbols struct { Binance string; OKX string; Bybit string; Bitget string }`
+  - [X] `var Symbols map[string]ExchangeSymbols` // key 为 `models.Coin.ID`
+  - [X] 提供加载覆盖：
+    - [X] 支持从 `.env` 指定的 JSON 文件路径（如 `SYMBOLS_JSON`）加载映射并覆盖默认值
+    - [X] 若缺失或为空则使用内置默认映射
+  - [X] TODO：为当前币种补齐真实交易对（需人工确认）：
+    - [X] starknet（ID: starknet）
+    - [X] zksync（ID: zksync）
+    - [X] taiko（ID: taiko）
+    - [X] scroll（ID: scroll）
+    - [X] movement（ID: movement）
+    - [X] polyhedra-network（ID: polyhedra-network）
+    - [X] linea（ID: linea）
+  - [X] 若某交易所无该交易对：对应字段置空，Provider 返回 `ErrSymbolNotSupported`，Aggregator 继续尝试下一个
 
 ---
 
 ## Aggregator 流程（核心）
 
-- [ ] `FetchCoinData(coin models.Coin) (*models.CoinData, error)`：
-  - [ ] 1) CoinGecko 主路径：
-    - [ ] 请求 CG（保留现实现：逐币 `/api/v3/coins/{id}`）；
+- [X] `FetchCoinData(coin models.Coin) (*models.CoinData, error)`：
+  - [X] 1) CoinGecko 主路径：
+    - [X] 请求 CG（保留现实现：逐币 `/api/v3/coins/{id}`）；
     - [ ] 可选优化（后续）：使用 `/api/v3/coins/markets?vs_currency=usd&ids=...&price_change_percentage=24h` 批量获取，降低 CG 压力；
-    - [ ] 解析成功：计算 `circulating_supply`、`full_supply`、缓存 `total_volume`，并立即返回 CG 数据；
-    - [ ] 解析失败或 429/超时：跳转回退链路
-  - [ ] 2) 回退链路：
-    - [ ] 基于 `Symbols` 为该币依次尝试 Provider；
-    - [ ] 某 Provider 返回价格与 24h 涨跌成功：
-      - [ ] 读取缓存（若 TTL 过期，返回 0）；
-      - [ ] 组装 `models.CoinData`：
-        - [ ] `Price.USD = price`
-        - [ ] `PriceChangePercentage24h = changePct24h`
-        - [ ] `MarketCap.USD = price * Circulating (若>0，否则 0)`
-        - [ ] `FullyDilutedValuation.USD = price * Full (若>0，否则 0)`
-        - [ ] `Volume24h.USD = TotalVolumeUSD (若有效，否则 0)`
-      - [ ] 返回该数据
-    - [ ] 若所有 Provider 均失败：返回错误（调用方记录为 Data unavailable）
+    - [X] 解析成功：计算 `circulating_supply`、`full_supply`、缓存 `total_volume`，并立即返回 CG 数据；
+    - [X] 解析失败或 429/超时：跳转回退链路
+  - [X] 2) 回退链路：
+    - [X] 基于 `Symbols` 为该币依次尝试 Provider；
+    - [X] 某 Provider 返回价格与 24h 涨跌成功：
+      - [X] 读取缓存（若 TTL 过期，返回 0）；
+      - [X] 组装 `models.CoinData`：
+        - [X] `Price.USD = price`
+        - [X] `PriceChangePercentage24h = changePct24h`
+        - [X] `MarketCap.USD = price * Circulating (若>0，否则 0)`
+        - [X] `FullyDilutedValuation.USD = price * Full (若>0，否则 0)`
+        - [X] `Volume24h.USD = TotalVolumeUSD (若有效，否则 0)`
+      - [X] 返回该数据
+    - [X] 若所有 Provider 均失败：返回错误（调用方记录为 Data unavailable）
 - [ ] 并发与限速：
   - [ ] 为各 Provider 设置一个小并发上限（如 3–5）以避免并发拥挤
   - [ ] 对 CG 出现连续失败时设置简单熔断窗口（如 5–10 分钟）
@@ -159,30 +159,30 @@
 
 ## Bot 接入与排序
 
-- [ ] 新增 `aggregator *market.Aggregator` 到 `internal/bot/bot.go` 的 `Bot` 结构体
-- [ ] 在 `New(...)` 中构造 Aggregator，注入 Provider 链与 TTL 配置
-- [ ] 在 `updateCoinData()` 中将 `b.coingecko.FetchCoinData(coin.ID)` 替换为 `b.aggregator.FetchCoinData(coin)`
-- [ ] 排序仍按 FDV 降序；当 FDV=0 时自然靠后
-- [ ] 输出格式与现有 `formatSingleCoin` 一致（价格为 `$` 格式，`N/A` 规则不变）
+- [X] 新增 `aggregator *market.Aggregator` 到 `internal/bot/bot.go` 的 `Bot` 结构体
+- [X] 在 `New(...)` 中构造 Aggregator，注入 Provider 链与 TTL 配置
+- [X] 在 `updateCoinData()` 中将 `b.coingecko.FetchCoinData(coin.ID)` 替换为 `b.aggregator.FetchCoinData(coin)`
+- [X] 排序仍按 FDV 降序；当 FDV=0 时自然靠后
+- [X] 输出格式与现有 `formatSingleCoin` 一致（价格为 `$` 格式，`N/A` 规则不变）
 
 ---
 
 ## 日志与可观测性
 
-- [ ] 统一日志：包含 `coin_id`、`source`（coingecko/binance/okx/bybit/bitget）、`latency_ms`、`status`
-- [ ] 对 429/5xx 记录告警级别日志，便于追踪限频与稳定性
-- [ ] 记录缓存命中与失效（supply/volume）
+- [X] 统一日志：包含 `coin_id`、`source`（coingecko/binance/okx/bybit/bitget）、`latency_ms`、`status`
+- [X] 对 429/5xx 记录告警级别日志，便于追踪限频与稳定性
+- [X] 记录缓存命中与失效（supply/volume）
 
 ---
 
 ## 配置与环境变量
 
-- [ ] `.env.example` 新增：
-  - [ ] `SYMBOLS_JSON`（可选）：交易对映射 JSON 文件路径
-  - [ ] `HTTP_TIMEOUT_SECONDS`（可选）：默认 10
-  - [ ] `SUPPLY_TTL_HOURS`（可选）：默认 24
-  - [ ] `VOLUME_TTL_MINUTES`（可选）：默认 30
-- [ ] 为 HTTP 客户端设置 `User-Agent: scroll-rank-bot/<version>`
+- [X] `.env.example` 新增：
+  - [X] `SYMBOLS_JSON`（可选）：交易对映射 JSON 文件路径
+  - [X] `HTTP_TIMEOUT_SECONDS`（可选）：默认 10
+  - [X] `SUPPLY_TTL_HOURS`（可选）：默认 24
+  - [X] `VOLUME_TTL_MINUTES`（可选）：默认 30
+- [X] 为 HTTP 客户端设置 `User-Agent: scroll-rank-bot/<version>`
 
 ---
 
