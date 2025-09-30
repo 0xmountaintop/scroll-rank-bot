@@ -5,6 +5,7 @@ ENV TZ="$TZ"
 
 ARG CLAUDE_CODE_VERSION=latest
 ARG CODEX_VERSION=latest
+ARG GO_VERSION=1.22.3
 
 # Install basic development tools and iptables/ipset
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -27,6 +28,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   nano \
   vim \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN ARCH=$(dpkg --print-architecture) && \
+  case "$ARCH" in \
+    amd64) GO_ARCH=amd64 ;; \
+    arm64) GO_ARCH=arm64 ;; \
+    *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
+  esac && \
+  wget "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" && \
+  rm -rf /usr/local/go && \
+  tar -C /usr/local -xzf "go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" && \
+  rm "go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
+
+ENV PATH=/usr/local/go/bin:$PATH
 
 # Ensure default node user has access to /usr/local/share
 RUN mkdir -p /usr/local/share/npm-global && \
@@ -65,6 +79,7 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 # Install global packages
 ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
 ENV PATH=$PATH:/usr/local/share/npm-global/bin
+ENV PATH=$PATH:/home/node/go/bin
 
 # Set the default shell to zsh rather than sh
 ENV SHELL=/bin/zsh

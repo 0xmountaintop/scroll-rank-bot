@@ -6,7 +6,8 @@
       "TZ": "${localEnv:TZ:America/Los_Angeles}",
       "CLAUDE_CODE_VERSION": "latest",
       "GIT_DELTA_VERSION": "0.18.2",
-      "ZSH_IN_DOCKER_VERSION": "1.2.0"
+      "ZSH_IN_DOCKER_VERSION": "1.2.0",
+      "GO_VERSION": "1.22.3"
     }
   },
   "runArgs": [
@@ -19,7 +20,8 @@
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
         "eamodio.gitlens",
-        "anthropic.claude-code"
+        "anthropic.claude-code",
+        "golang.go"
       ],
       "settings": {
         "editor.formatOnSave": true,
@@ -52,5 +54,5 @@
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace",
-  "postCreateCommand": "sudo /usr/local/bin/init-firewall.sh"
+  "postCreateCommand": "sudo /usr/local/bin/init-firewall.sh && mkdir -p /workspace/go/bin"
 }
