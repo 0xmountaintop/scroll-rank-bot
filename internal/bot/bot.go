@@ -10,6 +10,7 @@ import (
 
 	"scroll-rank-bot/internal/coingecko"
 	"scroll-rank-bot/internal/gas"
+	"scroll-rank-bot/internal/market"
 	"scroll-rank-bot/internal/models"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -20,7 +21,7 @@ type Bot struct {
 	coins map[string]models.Coin
 	mutex sync.RWMutex
 
-	coingecko              *coingecko.Client
+	aggregator             *market.Aggregator
 	coinDataUpdateInterval time.Duration
 	lastCoingeckoTime      time.Time
 	cachedCoinDataRespMsg  string
@@ -37,9 +38,18 @@ func New(token string) (*Bot, error) {
 		return nil, fmt.Errorf("failed to create bot: %w", err)
 	}
 
+	// Create CoinGecko client
+	cgClient := coingecko.NewClient()
+
+	// Create aggregator with providers and TTLs
+	httpTimeout := 10 * time.Second
+	supplyTTL := 24 * time.Hour
+	volumeTTL := 30 * time.Minute
+	aggregator := market.NewAggregator(cgClient, httpTimeout, supplyTTL, volumeTTL)
+
 	return &Bot{
 		api:                    api,
-		coingecko:              coingecko.NewClient(),
+		aggregator:             aggregator,
 		gasService:             gas.NewPriceService(),
 		coinDataUpdateInterval: 5 * time.Minute,
 		// gasCacheDur:            1 * time.Minute,
@@ -107,7 +117,7 @@ func (b *Bot) updateCoinData() {
 		wg.Add(1)
 		go func(coin models.Coin) {
 			defer wg.Done()
-			data, err := b.coingecko.FetchCoinData(coin.ID)
+			data, err := b.aggregator.FetchCoinData(coin)
 			if err != nil {
 				log.Printf("Error fetching data for %s: %v", coin.ID, err)
 				results <- struct {
